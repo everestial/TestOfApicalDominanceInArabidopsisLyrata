@@ -7,4 +7,4 @@ This is the Project (03) of my PhD. The trait measurements are included as excel
 
 **The `Rmarkdown` scripts and HTML output is included in this link: **
 
-https://cdn.rawgit.com/everestial/AuxinInhibitionResultsDataAnalyses/7d080f72/AlyAuxinTreatmentDataAnalyses.html 
+https://rawgit.com/everestial/AuxinInhibitionResultsDataAnalyses/master/AlyAuxinTreatmentDataAnalyses.html
