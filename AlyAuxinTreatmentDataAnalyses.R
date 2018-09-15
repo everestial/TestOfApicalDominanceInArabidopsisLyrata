@@ -1,6 +1,10 @@
 
+rmarkdown::render("analysis.R", "pdf_document")
+
+
 ### Set the required path 
 getwd()
+# ** Change path if need be. 
 setwd("/home/priyanka/Dropbox/DataAnalyses/LyrataPhotoDataAnalyses")
 getwd()
 list.files()  # read available files and folders 
@@ -8,13 +12,13 @@ list.files()  # read available files and folders
 ##### Read the required data  #####
 
 # Read data from September 18th, 2018
-DataFromSep <- readxl::read_xlsx("lyrataphotodata/09_18_2017_Data.xlsx", col_names = TRUE)
+DataFromSep <- readxl::read_xlsx("TraitsData/09_18_2017_Data.xlsx", col_names = TRUE)
 head(DataFromSep)
 
-DataFromDec <- readxl::read_xlsx("lyrataphotodata/12_18_2017_Data.xlsx", col_names = TRUE)
+DataFromDec <- readxl::read_xlsx("TraitsData/12_18_2017_Data.xlsx", col_names = TRUE)
 head(DataFromDec)
 
-DataFromMar <- readxl::read_xlsx("lyrataphotodata/03_28_2018_Data.xlsx", col_names = TRUE)
+DataFromMar <- readxl::read_xlsx("TraitsData/03_28_2018_Data.xlsx", col_names = TRUE)
 head(DataFromMar)
 
 
@@ -25,32 +29,43 @@ colnames(DataFromSep) <- paste(colnames(DataFromSep), "Sep", sep = ".")
 colnames(DataFromSep)[colnames(DataFromSep)=="Plant_ID.Sep"] <- "Plant_ID"
 colnames(DataFromSep)[colnames(DataFromSep)=="Treatment.Sep"] <- "Treatment"
 colnames(DataFromSep)[colnames(DataFromSep)=="Population.Sep"] <- "Population"
+colnames(DataFromSep)[colnames(DataFromSep)=="Family.Sep"] <- "Family"
+colnames(DataFromSep)[colnames(DataFromSep)=="TreatmentLevel.Sep"] <- "TreatmentLevel"
 
 colnames(DataFromDec) <- paste(colnames(DataFromDec), "Dec", sep = ".")
   # set the names of some columns back to original 
 colnames(DataFromDec)[colnames(DataFromDec)=="Plant_ID.Dec"] <- "Plant_ID"
 colnames(DataFromDec)[colnames(DataFromDec)=="Treatment.Dec"] <- "Treatment"
 colnames(DataFromDec)[colnames(DataFromDec)=="Population.Dec"] <- "Population"
+colnames(DataFromDec)[colnames(DataFromDec)=="Family.Dec"] <- "Family"
+colnames(DataFromDec)[colnames(DataFromDec)=="TreatmentLevel.Dec"] <- "TreatmentLevel"
 
 colnames(DataFromMar) <- paste(colnames(DataFromMar), "Mar", sep = ".")
   # set the names of some columns back to original 
 colnames(DataFromMar)[colnames(DataFromMar)=="Plant_ID.Mar"] <- "Plant_ID"
 colnames(DataFromMar)[colnames(DataFromMar)=="Treatment.Mar"] <- "Treatment"
 colnames(DataFromMar)[colnames(DataFromMar)=="Population.Mar"] <- "Population"
+colnames(DataFromMar)[colnames(DataFromMar)=="Family.Mar"] <- "Family"
+colnames(DataFromMar)[colnames(DataFromMar)=="TreatmentLevel.Mar"] <- "TreatmentLevel"
 
 head(DataFromSep)
+
+## **use if need be: this renaming can also be done with library(data.table)
+#library(data.table)
+#data.table::setnames(DataFromDec, old = c("Plant_ID.Dec", "Treatment.Dec"), 
+         #new = c("Plant_ID", "Treatment"))
 
 
 ####### Merge dataframes  ########### 
 
-## ** Use if need be: We can merge two dataframes at a time
+## ** Use if need be: We can merge only two dataframes one at a time
 #merged.Sept.Dec <- merge(DataFromSept, DataFromDec, 
                              #by=c("Plant_ID", "Treatment", "Population"), all = TRUE)
 #head(merged.Sept.Dec)
 
 ## Or we can merge multiple dataframes using a "Reduce - Merge" function.
 merged.Sep.Dec.Mar = Reduce(function(x, y) 
-  merge(x, y, by=c("Plant_ID", "Treatment", "Population"), 
+  merge(x, y, by=c("Plant_ID", "Population", "Family", "TreatmentLevel", "Treatment"), 
         all = TRUE), list(DataFromSep, DataFromDec, DataFromMar))
 head(merged.Sep.Dec.Mar)
 
