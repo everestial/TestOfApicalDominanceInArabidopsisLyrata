@@ -203,9 +203,17 @@ colnames(gatheredDiameterAndTreatmentData)
 typeof(gatheredDiameterAndTreatmentData$Diameter)
 
 # So, updating the datatypes again.
-# find columns that need their datatypes updated
 gatheredDiameterAndTreatmentData[c("Diameter")] <- 
   as.double(gatheredDiameterAndTreatmentData$Diameter)
+
+gatheredDiameterAndTreatmentData[c("Month")] <- 
+  as.factor(gatheredDiameterAndTreatmentData$Month)
+
+gatheredDiameterAndTreatmentData[c("Treatment")] <- 
+  as.factor(gatheredDiameterAndTreatmentData$Treatment)
+
+# now, check the type of the data 
+typeof(gatheredDiameterAndTreatmentData$Diameter)
 
 ## Calculate "sub-mean" value (by "Treatment", by "Month")
   # Since, our overall interest is to check how different "Treatment" affect "Diameter"
@@ -228,13 +236,15 @@ subSEdiameter = aggregate(
           Month = gatheredDiameterAndTreatmentData$Month), FUN = sd , na.rm=TRUE)  
 
 # Change column name "x" to "SE"
-colnames(subSEdiameter)[colnames(subSEdiameter)=="x"] <- "SE"
-subSE
+colnames(subSEdiameter)[colnames(subSEdiameter)=="x"] <- "SEdiam"
+subSEdiameter
 
 ## now, bind the "subMeansDiameter" with "subSEdiameter" 
 subMeansDiameter = Reduce(function(x, y) 
   merge(x, y, by=c("Treatment", "Month"), 
         all = TRUE), list(subMeansDiameter, subSEdiameter))
+
+head(subMeansDiameter)
 
 
 ## 06 - A (ii) : Now, make some plots ####
@@ -281,11 +291,17 @@ gatheredDiameterAndTreatmentData  %>%
     x = Month, y = Diameter, group = Treatment, colour = Treatment), 
     position = position_dodge(width = 0.2)) 
 
+  # ** to do : add 
+    # number of samples in each "Treatment, by Months" - as ticks on x-axis
+    # type "mean" and "SE" values, after that sample size value 
+
+  # ** to do : Make plot by each "TreatmentLevel" for each time period (month) 
+
 
 #### 06 - B) Now, make similar plots for "lateral shoot rating" ####
 ## Plot - Changes in "lateral shoot development" across time (by Treatment)
 
-## 06 - B (i) Some data preparation before plotting ########### 
+## 06 - B (i) : Some data preparation before plotting ####
 ### Let's see how diameter changes across "Treatment" for each time points
 laterShootColNames = unique(grep(paste(c("Lat_Shoot"), collapse="|"), 
                                colnames(merged.Sep.Dec.Mar), value=TRUE))
@@ -308,7 +324,9 @@ gatheredLateralShootAndTreatmentData[c("LateralShootR")] <-
 # Calculate "sub-mean" value (by "Treatment", by "Month")
 subMeansLSR = aggregate(gatheredLateralShootAndTreatmentData$LateralShootR,
   by=list(Treatment = gatheredLateralShootAndTreatmentData$Treatment, 
-          Month = gatheredLateralShootAndTreatmentData$Month), FUN = mean, na.rm=TRUE)  
+          Month = gatheredLateralShootAndTreatmentData$Month), FUN = mean, na.rm=TRUE) 
+
+head(subMeansLSR)
 
 # the above "aggregate" method puts new values as "x". Change it to "Diameter"
 colnames(subMeansLSR)[colnames(subMeansLSR)=="x"] <- "LateralShootR"
