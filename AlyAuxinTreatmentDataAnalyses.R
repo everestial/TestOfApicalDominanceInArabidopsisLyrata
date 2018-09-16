@@ -11,16 +11,17 @@ library("knitr")
 #' --- 
 
 
-### Set the required path 
+#### Step 01: Set the required path ####
 getwd()
 # ** Change path if need be. 
 setwd("/home/priyanka/Dropbox/DataAnalyses/LyrataPhotoDataAnalyses")
 getwd()
 list.files()  # read available files and folders 
 
-##### Read the required data  #####
+#### Step 02: Read the required data ####
+# Here, we read the data from month (Sep 2017 to March 2018).
+# The data were collected biweekly except for few months.
 
-# Read data from September 18th, 2018
 DataFromSep <- readxl::read_xlsx("TraitsData/09_18_2017_Data.xlsx", col_names = TRUE)
 head(DataFromSep)
 
@@ -30,9 +31,14 @@ head(DataFromDec)
 DataFromMar <- readxl::read_xlsx("TraitsData/03_28_2018_Data.xlsx", col_names = TRUE)
 head(DataFromMar)
 
+## Step 02 - A: Rename/Adjust column names
+## Here, we will create unique names of each columns for each dataframe  
+## But, some column names will be kept common which will help in merging the data
 
-######    Create unique names for each columns of each dataframe   ######
-## add suffix to each dataframe "header"; keep names like "plant ID", "treatment" and "population" as is
+# Process
+  # add unique (month name) suffix to each dataframe "header"
+  # reset the names like "plant ID", "treatment" and "population" as they are
+
 colnames(DataFromSep) <- paste(colnames(DataFromSep), "Sep", sep = ".")
   # set the names of some columns back to original 
 colnames(DataFromSep)[colnames(DataFromSep)=="Plant_ID.Sep"] <- "Plant_ID"
@@ -65,12 +71,11 @@ head(DataFromSep)
          #new = c("Plant_ID", "Treatment"))
 
 
-####### Merge dataframes  ########### 
+#### Step 03: Merge dataframes  ####
 
 ## ** Use if need be: We can merge only two dataframes one at a time
 #merged.Sept.Dec <- merge(DataFromSept, DataFromDec, 
                              #by=c("Plant_ID", "Treatment", "Population"), all = TRUE)
-#head(merged.Sept.Dec)
 
 ## Or we can merge multiple dataframes using a "Reduce - Merge" function.
 merged.Sep.Dec.Mar = Reduce(function(x, y) 
@@ -82,7 +87,7 @@ head(merged.Sep.Dec.Mar)
 merged.Sep.Dec.Mar[merged.Sep.Dec.Mar == "NA"] <- NA
 
 
-##### remove not-required column names by matching "header names".  #####
+## remove not-required column names by matching "header names".  ##
 # such as "Date", "Remarks", etc.
 
 # find the columns to drop (i.e they are not required any more in this data analyses)
@@ -99,21 +104,26 @@ head(merged.Sep.Dec.Mar)
 #merged.Sept.Dec.Mar.selected = subset(merged.Sept.Dec.Mar, select = c(dropcols))
 
 
-##### Assign proper datatype to each column ######
+#### Step 04: Assign proper datatype to each column ####
 
 ## find the column names for which we want to convert the data types
 ChangeToDouble = unique(grep(paste(c("Diameter", "Lat_Shoot", "Inflores", 
                                      "Leaf_Shape", "Trichomes", "Bolting", "Flower"), collapse="|"), 
                        colnames(merged.Sep.Dec.Mar), value=TRUE))
+# see which columns will be changed to "double" type
+ChangeToDouble
 
-ChangeToFactor = unique(grep(paste(c("Treatment", "Population"), collapse="|"), 
+ChangeToFactor = unique(grep(paste(c( "Family", "Population", "Treatment"), collapse="|"), 
                              colnames(merged.Sep.Dec.Mar), value=TRUE))
+# see which columns will be changed to "factor" type
+ChangeToFactor
 
-## Change datatype of the column
-# change all other data to "double" type
+## Change datatype of the columns 
+# change required columns to "double" type
 merged.Sep.Dec.Mar[ChangeToDouble] <- lapply(merged.Sep.Dec.Mar[ChangeToDouble], 
                                              as.double, na.strings = "NA")
-## assign "treatments" and "population" as factors
+
+# change other required columns to "factor" type 
 #merged.Sep.Dec.Mar$Treatment = as.factor(merged.Sep.Dec.Mar$Treatment)
 merged.Sep.Dec.Mar[ChangeToFactor] <- lapply(merged.Sep.Dec.Mar[ChangeToFactor], 
                                             as.factor)
@@ -122,18 +132,17 @@ merged.Sep.Dec.Mar[ChangeToFactor] <- lapply(merged.Sep.Dec.Mar[ChangeToFactor],
   ## .. as "double" appropriate ??
 
 
-##### Get some summary statistics  #######
+#### Step 05: Get some summary statistics  ####
 
 ## Overall summary 
 summary(merged.Sep.Dec.Mar)
 
-## Summary on diameter on each time points 
+## Summary on diameter from each time points 
 summary(merged.Sep.Dec.Mar$`Diameter(inches).Sep`, na.rm = TRUE)
 summary(merged.Sep.Dec.Mar$`Diameter(inches).Dec`, na.rm = TRUE)
 summary(merged.Sep.Dec.Mar$`Diameter(inches).Mar`, na.rm = TRUE)
 
-## Get mean/summary by "treatment" category for each time points. 
-
+## Get summary (on mean) by "treatment" for each time points. 
 SepDiaSummaryByTreatment = with(
   merged.Sep.Dec.Mar, base::
     tapply(merged.Sep.Dec.Mar$`Diameter(inches).Sep`, 
@@ -153,87 +162,90 @@ MarDiaSummaryByTreatment = with(
 MarDiaSummaryByTreatment
 
 
-#### Start plotting the data #####
+#### Step 06: Start plotting the data ####
 
 ## install and import "ggplot2" library
 # install.packages("ggplot2")  # install if required
 require("ggplot2")
 require(dplyr)
 require(tidyr)
-colnames(merged.Sep.Dec.Mar)
 
-## Plot - Diameter Changes across time (by Treatment)
-##### Some data preparation before plotting ########### 
-### Let's see how diameter changes across "Treatment" for each time points
+#### 06 - A) Plot variation in diameter (by Treatment) across several time periods ####
 
+## 06 - A (i) : Run some data preparation before plotting ####
 # first find all the available "Diameter" data columns 
 diameterColNames = unique(grep(paste(c("Diameter"), collapse="|"), 
                        colnames(merged.Sep.Dec.Mar), value=TRUE))
 diameterColNames
 
-# Select colums with data for "Diameter" (for each time) and "Treatment"
+## Subset the data that contain "Diameter" (for each time) and "Treatment"
 diameterAndTreatmentData = subset(
   merged.Sep.Dec.Mar, select = c(diameterColNames, "Treatment"))
 head(diameterAndTreatmentData)
 
 
-## now, reshape the data: here, gather is used to store "header" values as "Month" ... 
-  # .. and the values within each month are stored as "Diameter". 
+## now, reshape the data: 
+  # use "gather" to store "header" values as "Month"
+  # and the diameter values within each month as "Diameter". 
 gatheredDiameterAndTreatmentData = 
   diameterAndTreatmentData %>%  gather(Month, Diameter, -Treatment) 
 head(gatheredDiameterAndTreatmentData)
 
-### ** if need be ** to write data to files 
+## ** if need be ** : to write data to files 
 #write.table(gatheredDiameterAndTreatmentData, file = "DiameterAndTreatmentData.txt", 
  #           sep = "\t", na = "NA", row.names = FALSE, col.names = TRUE)
 
-# Again update the datatype of the column. The datatype of the columns are reverting to "character" .. 
-  # after subsetting and/or gathering. So, updating the datatypes again.
 
-# find columns that need their datatypes updated
+## Again update the datatype of the column. 
+
+# After subsetting and/or gathering the datatype of the columns revert to "character".
 colnames(gatheredDiameterAndTreatmentData)
 typeof(gatheredDiameterAndTreatmentData$Diameter)
 
+# So, updating the datatypes again.
+# find columns that need their datatypes updated
 gatheredDiameterAndTreatmentData[c("Diameter")] <- 
   as.double(gatheredDiameterAndTreatmentData$Diameter)
 
-# Calculate "sub-mean" value (by "Treatment", by "Month")
-subMeans = aggregate(
+## Calculate "sub-mean" value (by "Treatment", by "Month")
+  # Since, our overall interest is to check how different "Treatment" affect "Diameter"
+  # we will compute how the mean "Diameter" varies by "Treatment" for each month
+subMeansDiameter = aggregate(
   as.double(unlist(gatheredDiameterAndTreatmentData$Diameter)),
   by=list(Treatment = gatheredDiameterAndTreatmentData$Treatment, 
           Month = gatheredDiameterAndTreatmentData$Month), FUN = mean, na.rm=TRUE)  
 
 # the above "aggregate" method puts new values as "x". Change it to "Diameter"
-colnames(subMeans)[colnames(subMeans)=="x"] <- "Diameter"
-subMeans
+colnames(subMeansDiameter)[colnames(subMeansDiameter)=="x"] <- "Diameter"
+subMeansDiameter
 
 
-## Similarly compute "standard error"
+## Similarly compute "standard error" of the mean 
 # Calculate "sub-mean" value (by "Treatment", by "Month")
-subSE = aggregate(
+subSEdiameter = aggregate(
   as.double(unlist(gatheredDiameterAndTreatmentData$Diameter)),
   by=list(Treatment = gatheredDiameterAndTreatmentData$Treatment, 
           Month = gatheredDiameterAndTreatmentData$Month), FUN = sd , na.rm=TRUE)  
 
 # Change column name "x" to "SE"
-colnames(subSE)[colnames(subSE)=="x"] <- "SE"
+colnames(subSEdiameter)[colnames(subSEdiameter)=="x"] <- "SE"
 subSE
 
-## now, bind the "subMeans" with "subSE" 
-subMeans = Reduce(function(x, y) 
+## now, bind the "subMeansDiameter" with "subSEdiameter" 
+subMeansDiameter = Reduce(function(x, y) 
   merge(x, y, by=c("Treatment", "Month"), 
-        all = TRUE), list(subMeans, subSE))
-
-##### Now, make some plots ###########
+        all = TRUE), list(subMeansDiameter, subSEdiameter))
 
 
-### Plot data for each "Treatment" group by "Month"
+## 06 - A (ii) : Now, make some plots ####
+
+## Plot data for each "Treatment" group by "Month"
 gatheredDiameterAndTreatmentData  %>%
   subset(Diameter != "NA") %>%
   ggplot(aes(x = factor(Month), y = Diameter)) + 
   geom_point(aes(colour = Treatment), na.rm = TRUE, 
              position = position_dodge(width = 0.2)) +
-  geom_point(data = subMeans, size = 4, aes(colour = Treatment), 
+  geom_point(data = subMeansDiameter, size = 4, aes(colour = Treatment), 
              na.rm = TRUE, position = position_dodge(width = 0.2)) 
 
 ## The above plot can be customized and improved to : 
@@ -244,7 +256,7 @@ gatheredDiameterAndTreatmentData  %>%
   ggplot(aes(x = factor(Month), y = Diameter)) + 
   geom_point(aes(colour = Treatment), na.rm = TRUE, 
              position = position_dodge(width = 0.2)) +
-  geom_point(data = subMeans, size = 4, aes(colour = Treatment), 
+  geom_point(data = subMeansDiameter, size = 4, aes(colour = Treatment), 
              na.rm = TRUE, position = position_dodge(width = 0.2)) +
   
   theme_bw() + # remove background 
@@ -270,10 +282,10 @@ gatheredDiameterAndTreatmentData  %>%
     position = position_dodge(width = 0.2)) 
 
 
-### Now, make similar plots for "lateral shoot rating" 
+#### 06 - B) Now, make similar plots for "lateral shoot rating" ####
 ## Plot - Changes in "lateral shoot development" across time (by Treatment)
 
-##### Some data preparation before plotting ########### 
+## 06 - B (i) Some data preparation before plotting ########### 
 ### Let's see how diameter changes across "Treatment" for each time points
 laterShootColNames = unique(grep(paste(c("Lat_Shoot"), collapse="|"), 
                                colnames(merged.Sep.Dec.Mar), value=TRUE))
