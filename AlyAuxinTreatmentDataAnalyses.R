@@ -498,16 +498,13 @@ gatheredLateralShootAndTreatmentData  %>%
     x = Month, y = LateralShootR, group = Treatment, colour = Treatment), 
     position = position_dodge(width = 0.2)) 
 
---- 
-#' \
----
 
 ---
-#' #### Step 07 : Statistical tests 
+#' ### Step 07 : Statistical tests 
 ---
 
 --- 
-#' ##### Step 07 - A : Linear regression model  
+#' #### Step 07 - A : Linear regression model  
 ---
   
 ## calculate reproductive season diameter change
