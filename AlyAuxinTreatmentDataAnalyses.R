@@ -468,6 +468,7 @@ gatheredLateralShootAndTreatmentData  %>%
 #'   1) arrange the plot by factors (i.e Month, with "Sept" at the beginning)\
 #'   2) add custom color code to the treatment
 ---
+
 gatheredLateralShootAndTreatmentData  %>%
   subset(LateralShootR != "NA") %>%
   ggplot(aes(x = factor(Month), y = LateralShootR)) + 
@@ -503,28 +504,101 @@ gatheredLateralShootAndTreatmentData  %>%
 #' ### Step 07 : Statistical tests 
 ---
 
---- 
-#' #### Step 07 - A : Linear regression model  
----
+# ... continuing  ....
   
-## calculate reproductive season diameter change
+--- 
+#' #### Step 07 - A : Linear regression model\
+#' **Some preliminary tests**
+---
 
-# preliminary tests using lm:
-head(merged.Sep.Dec.Mar)
+# modeling the effects of treatment 
+####
+print('hello')
+colnames(merged.Sep.Dec.Mar)
+
+# relevel factors to include "Control" as the reference level
+merged.Sep.Dec.Mar = within(
+  merged.Sep.Dec.Mar, 
+  TreatmentLevel <- relevel(TreatmentLevel, ref = "Control"))
+
+merged.Sep.Dec.Mar = within(
+  merged.Sep.Dec.Mar, 
+  Treatment <- relevel(Treatment, ref = "Water"))
+
 plantDiamSep <- lm(`Diameter(inches).Sep` ~ TreatmentLevel, merged.Sep.Dec.Mar)
 summary(plantDiamSep)
 
+plantDiamSep01 <- lm(`Diameter(inches).Sep` ~ Treatment, merged.Sep.Dec.Mar)
+summary(plantDiamSep01)
+
+## 07 - A (i): 
+# Testing if there was family level effects on diameter before any treatment started.
+plantDiamSepFam <- lm(`Diameter(inches).Sep` ~ TreatmentLevel/Family, merged.Sep.Dec.Mar)
+summary(plantDiamSepFam)
+
+plantDiamSepFam01 <- lm(`Diameter(inches).Sep` ~ Treatment/Family, merged.Sep.Dec.Mar)
+summary(plantDiamSepFam01)
+
+## Result: We can see that there was no significant differences in diameter before the 
+   # treatment was started for any "TreatmentLevel : Control vs. Auxin".
+## Result 01: We can see that there was no significant differences in diameter before the 
+   # treatment was started for any "Treatment : Control vs. Auxin". "Treatment : Water vs. DMSO vs. Auxin Spray vs. Auxin droplet".
+
+## Result (with Family as covariate): 
+  # Family 20 and 21 had some discrepancies in initial diameter before the treatment started. 
+
+
+## 07 - A (ii):
+## Now, check if diameter were different in the month of december 
 plantDiamDec <- lm(`Diameter(inches).Dec` ~ TreatmentLevel, merged.Sep.Dec.Mar)
 summary(plantDiamDec)
 
-plantDiamDecTnF <- lm(`Diameter(inches).Dec` ~ TreatmentLevel/Family, merged.Sep.Dec.Mar)
-summary(plantDiamDecTnF)
+plantDiamDecFam <- lm(`Diameter(inches).Dec` ~ TreatmentLevel/Family,  merged.Sep.Dec.Mar)
+summary(plantDiamDecFam)
+
+# run ANOVA to check for "Family" based effects. 
+AnovatreatmentEffDecbyFam <- anova(plantDiamDec, plantDiamDecFam)
+AnovatreatmentEffDecbyFam
+
+## Result: Treatment level had very significant effect on diameter changes. p-value: 3.982e-06
+  # Treatment affect diameter changes negatively (i.e they reduced the diameter)
+  # But, the family based effects were almost non existent on the effects of the treatments. 
+    # p-value: 0.2591
+
+
+## 07 - B (i): Test for the effect of Treatment on lateral shoot rating. 
+lateralShootRatDec <- glm(Lat_Shoot_R.Dec ~ TreatmentLevel, merged.Sep.Dec.Mar, family = gaussian())
+summary(lateralShootRatDec)
+
+lateralShootRatDecFam <- glm(Lat_Shoot_R.Dec ~ TreatmentLevel/Family, merged.Sep.Dec.Mar, family = gaussian())
+summary(lateralShootRatDecFam)
+
+anova(lateralShootRatDecFam, lateralShootRatDec)
+
+## Result: There seems to be no effect of inhibition treatments on lateral shoot rating (in December). 
+
+## 07 - B (i): Test for the effect of Treatment on lateral shoot rating. 
+lateralShootRatMar <- glm(Lat_Shoot_R.Mar ~ TreatmentLevel, merged.Sep.Dec.Mar, family = gaussian())
+summary(lateralShootRatMar)
+
+lateralShootRatMarFam <- glm(Lat_Shoot_R.Mar ~ TreatmentLevel/Family, merged.Sep.Dec.Mar, family = gaussian())
+summary(lateralShootRatMarFam)
+
+anova(lateralShootRatMarFam, lateralShootRatMar)
+
+## Result: But, auxin treatment really had some effect on lateral shoot rating on March. p-value: 0.0513 
+  # This must be due to the fact that lateral shoot once emerged don't disappear. The observed effects of 
+  # .. treatment should have been cumulative over the development period of lyrata. 
+
+
+
+
 
 #... continue .... 
-#But, to do: 
+# Still need to do: 
 #  - add diameter as mm. 
 #  - take diameter in Sept as base and then add diameter changes. 
-#  - set "contro" as the base level 
+#  - set "control" as the base level 
 
 
 ####
