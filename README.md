@@ -6,7 +6,9 @@ Data was recorded as photo of each plant taken from top with a scale and it's ID
 
 **The "Rmarkdown" of the the analyses is available as HTML output in this link:** https://rawgit.com/everestial/AuxinInhibitionResultsDataAnalyses/master/AlyAuxinTreatmentDataAnalyses.html 
 
-**Here is another link to the embede link if above link didn't work:** http://htmlpreview.github.io/?
+**Here is another link to the embeded HTML output if above link didn't work:** http://htmlpreview.github.io/?https://github.com/everestial/AuxinInhibitionResultsDataAnalyses/blob/master/AlyAuxinTreatmentDataAnalyses.html 
+
+
 
 
 
