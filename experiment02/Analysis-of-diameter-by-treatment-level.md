@@ -457,7 +457,7 @@ theme_538 <- function(base_size = 8, base_family = "Arial") {
 ### Diameter - Treatment Level (tl) - Density Function
 
 ``` r
-grDevices::png(filename = "hist_diam_tl.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_diam_tl.png",  width = 16.5, height = 10, units = 'cm', res = 400)
 
 hist_diam <- fndata %>%
   ggplot(aes(diaIn, fill = treatmentLevel, colour = treatmentLevel)) +
@@ -485,15 +485,15 @@ dev.off()
     ##                 2
 
 ``` r
-knitr::include_graphics("hist_diam_tl.png")
+knitr::include_graphics("plots/hist_diam_tl.png")
 ```
 
-![](hist_diam_tl.png)<!-- -->
+![](plots/hist_diam_tl.png)<!-- -->
 
 ### Diameter - Treatment Level (tl) - Density Function version 2
 
 ``` r
-grDevices::png(filename = "hist_diam2.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_diam2.png",  width = 16.5, height = 10, units = 'cm', res = 400)
 
 hist_diam2 <- fndata %>%
   ggplot(aes(diaIn, fill = treatmentLevel, colour = treatmentLevel)) +
@@ -523,15 +523,15 @@ dev.off()
     ##                 2
 
 ``` r
-knitr::include_graphics("hist_diam2.png")
+knitr::include_graphics("plots/hist_diam2.png")
 ```
 
-![](hist_diam2.png)<!-- -->
+![](plots/hist_diam2.png)<!-- -->
 
 ### Diameter - Treatment Level (tl) - Boxplot
 
 ``` r
-grDevices::png(filename = "violin_diam.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/violin_diam.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 violin_diam <- fndata %>%
   group_by(treatmentLevel, dateFac) %>% mutate(N=n()) %>%
@@ -571,15 +571,15 @@ dev.off()
     ##                 2
 
 ``` r
-knitr::include_graphics("violin_diam.png")
+knitr::include_graphics("plots/violin_diam.png")
 ```
 
-![](violin_diam.png)<!-- -->
+![](plots/violin_diam.png)<!-- -->
 
 # Diameter - Treatment Level (tl) - Points
 
 ``` r
-grDevices::png(filename = "dots_diam_tl.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/dots_diam_tl.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 dots_diam_tl <- fndata %>% ggplot(aes(x = dateFac, y = diaIn, group = treatmentLevel, color = treatmentLevel))+
   #geom_point()
@@ -619,10 +619,10 @@ dev.off()
     ##                 2
 
 ``` r
-knitr::include_graphics("dots_diam_tl.png")
+knitr::include_graphics("plots/dots_diam_tl.png")
 ```
 
-![](dots_diam_tl.png)<!-- -->
+![](plots/dots_diam_tl.png)<!-- -->
 
 ### Diameter - Treatment Level (tl) - Checking for Normality
 

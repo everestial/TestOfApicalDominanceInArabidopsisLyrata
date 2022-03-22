@@ -1,0 +1,577 @@
+---
+title: "Analysis of Inflorescence treatment level."
+author: "Bishwa"
+date: "`r Sys.Date()`"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Section 01 - Get Data and Prepare the data
+
+I downloaded data and placed on my computer. You should change the path for the data
+following packges are necessary for your work
+1. `tidyverse`
+2. `car`
+3. `nlme`
+4. `lme4`
+5. `rstatix`
+
+When I am using function from specific packages I am using namespace atleast at the first time of its usage
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rstatix)
+```
+
+
+## 1.1 Upload Packages
+```{r dataImport}
+
+#set working directory
+path<- "../data/"
+
+
+
+sep2017<- readxl::read_excel(path = paste0(path, "/09_18_2017_Data.xlsx"), sheet = "Sheet1", na = "NA")
+dec2017<- readxl::read_excel(path = paste0(path, "/12_18_2017_Data.xlsx"), sheet = "Sheet1", na = "NA")
+mar2018<- readxl::read_excel(path = paste0(path, "/03_28_2018_Data.xlsx"), sheet = "Sheet1", na = "NA")
+```
+
+## 1.2 Check Data Structures
+
+### September 2017
+```{r}
+str(sep2017)
+```
+
+### December 2017 
+```{r}
+str(dec2017)
+```
+
+### October 2018
+```{r}
+str(mar2018)
+```
+
+## Prepare the data
+
+### ID's & Column for Month
+```{r}
+# ID's
+sep2017$id<- row.names(sep2017)
+dec2017$id<- row.names(dec2017)
+mar2018$id<- row.names(mar2018)
+
+# Month column
+sep2017$Month <- "Sep"
+dec2017$Month <- "Dec"
+mar2018$Month <- "Mar"
+```
+
+### Combine the sets & and change column names
+```{r}
+fdata<- rbind(sep2017,dec2017,mar2018)
+
+# changing the name when necessary
+names(fdata)<- c("date", "plantID", "family", "diaIn", "latShootRating", 
+                 "inflorescence", "leafShape", "trichomesInt", "treatmentLevel", 
+                 "treatment", "population", "bolting", "flowering", "remarks_01", 
+                 "remarks_02", "id", "month")
+```
+
+### Convert inches to mm
+```{r}
+fdata$diaIn <- fdata$diaIn * 25.4
+
+fdata <- fdata %>%
+  mutate(treatmentLevel = replace(treatmentLevel, treatmentLevel == "Auxin", "NPA"))
+```
+
+### Get rid of unnecessary columns and check the amount of missing values in each column
+```{r}
+library(tidyverse)
+mvdata<- fdata %>% select( - c(remarks_01, remarks_02))
+
+mvdata %>% summarise_all(funs(sum(is.na(.))))
+```
+
+### Delete rows with missing values
+```{r}
+fndata <- mvdata %>% drop_na()
+
+#fndata <- fdata %>%  mutate(across(where(is.character), ~na_if(., "NA")))
+```
+
+### Specify correct data types
+```{r}
+# Not numeric variables
+char_var<- c("date","plantID","treatmentLevel","treatment","population", "month", "family")
+
+# Numeric variables
+num_var<- names(fndata[, !(names(fndata) %in% char_var)])
+
+#convert characters to numeric vector
+fndata[, num_var]<- sapply(fndata[, num_var], as.numeric)
+
+#convert characters to factors
+fndata$dateFac   <- factor(fndata$date,       labels =  c("September 2017", "December 2017", "March 2018" ),
+                           levels =  c("09_18_2017", "12_18_2017", "03_28_2018" ))
+
+fndata$treatment <- factor(fndata$treatment,  labels =  c("NPA Drop", "NPA Spray", "DMSO", "Water"))
+
+fndata$treatmentLevel <- as.factor(fndata$treatmentLevel)
+
+fndata$plantID<- as.factor(fndata$plantID)
+
+# Check 
+sapply(fndata, class)
+```
+
+## Section 02 - Overall Summary statistics
+
+### Choose variables of interest
+```{r pressure}
+# extract variables that are important
+sel_var<- c("date", "plantID", "treatment", "treatmentLevel","diaIn",
+            "latShootRatio", "inflorescence", "leafShape"  )
+
+#---------- mean
+# mean_diaInflo<- fndata %>% select(sel_var) %>% 
+#   group_by(treatment) %>% 
+#   summarise_at(.vars = vars(diaIn, inflorescence),.funs = c(mean = "mean"))
+# 
+# sd_diaInflo<- fndata %>% select(sel_var) %>% 
+#   group_by(treatment) %>% 
+#   summarise_at(.vars = vars(diaIn, inflorescence),.funs = c(sd = "mean"))
+# 
+# sumdat<- cbind(mean_diaInflo, sd_diaInflo[, 2:3])
+
+# Stats for Diameter
+mean_diaInflo<- fndata %>% 
+  group_by(treatment) %>% 
+  summarise(mean = mean(diaIn, na.rm = TRUE),
+            sd   = sd(diaIn, na.rm = TRUE)
+  )
+
+# Stats for inflorescence
+mean_inflo<- fndata %>% 
+  group_by(treatment) %>% 
+  summarise(
+    mean = mean(inflorescence, na.rm = TRUE),
+    sd   = sd(inflorescence, na.rm = TRUE)
+  )
+
+# Stats for Lat_Shoot
+mean_latShoot<- fndata %>% 
+  group_by(treatment) %>% 
+  summarise(mean = mean(latShootRating, na.rm = TRUE),
+            sd   = sd(latShootRating, na.rm = TRUE)
+  )
+
+#------- apply variable name and combine
+mean_diaInflo$var <- "Diameter"
+mean_inflo$var    <- "Inflorescence"
+mean_latShoot$var <- "LatShoot"
+
+
+sumdata<- rbind(mean_diaInflo,mean_inflo, mean_latShoot)
+sumdata
+```
+
+# Section 03 - Plots and Anlysis
+
+### Theme Function
+```{r}
+theme_538 <- function(base_size = 8, base_family = "Arial") {
+  theme_grey(base_size = base_size, base_family = base_family) %+replace%
+    theme(
+      # drop minor gridlines and axis-ticks
+      panel.grid.minor = element_blank(),
+      axis.ticks = element_blank(),
+      # change font elements/family
+      text = element_text(family = "Arial", size = base_size),
+      axis.text = element_text(face = "bold", color = "grey", size = base_size),
+      axis.title = element_text(face = "bold", size = rel(1.33)),
+      axis.title.x = element_text(margin = margin(0.3, 0, 0, 0, unit = "cm")),
+      axis.title.y = element_text(margin = margin(0, 0.3, 0, 0, unit = "cm"), angle =90),
+      plot.title = element_text(face = "bold", size = rel(1.67), hjust = 0),
+      plot.title.position = "plot",
+      plot.subtitle = element_text(size = 12, margin = margin(0.2, 0, 1, 0, unit = "cm"), hjust = 0),
+      plot.caption = element_text(size = 8, margin = margin(1, 0, 0, 0, unit = "cm"), hjust = 1),
+      # change plot colors for the background/panel elements
+      plot.background = element_rect(fill = "#f0f0f0", color = NA),
+      panel.background = element_rect(fill = "#f0f0f0", color = NA),
+      panel.grid.major =  element_line(color = "#d0d0d0"),
+      panel.border = element_blank(),
+      # shrinks margin and simplify the strip/facet elements
+      strip.background = element_blank(),
+      strip.text = element_text(size = rel(1.33), face = "bold")
+    )
+}
+```
+
+# inflorescence - Treatmnent Level (tl)
+
+### inflorescence - Treatment Level (tl) - Density Function
+```{r}
+grDevices::png(filename = "plots/hist_infl_tl.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+
+hist_infl <- fndata %>%
+  ggplot(aes(inflorescence, fill = treatmentLevel, colour = treatmentLevel)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  scale_colour_manual("Treatment Level", values = c("#219ebc", "#fb8500")) + 
+  facet_wrap(~dateFac, nrow = 3) + 
+  labs(x = "inflorescence", y = "Density") +
+  #coord_flip() + 
+  theme_538() +
+  theme(
+    #legend.position = "top",
+    legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
+    legend.title = element_text(family = "Arial", size = 8, face = "bold"),
+    legend.title.align = 0.5,
+    legend.text = element_text(size=7),
+    plot.margin = margin(0.3, 0.1, 0.2, 0.2, unit = "cm"),
+    )
+  
+
+hist_infl
+
+dev.off()
+
+knitr::include_graphics("plots/hist_infl_tl.png")
+```
+
+### inflorescence - Treatment Level (tl) -  Density Function version 2
+```{r}
+grDevices::png(filename = "plots/hist_infl2.png",  width = 6, height = 4, units = 'in', res = 400)
+
+hist_infl2 <- fndata %>%
+  ggplot(aes(inflorescence, fill = treatmentLevel, colour = treatmentLevel)) +
+  geom_density(alpha = 0.6) +
+  scale_fill_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  scale_colour_manual("Treatment Level", values = c("#219ebc", "#fb8500")) + 
+  facet_grid(treatmentLevel ~ dateFac) + 
+  labs(x = "inflorescence", y = "Density") +
+  #coord_flip() + 
+  theme_538() +
+  theme(
+    legend.position = "top",
+    legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
+    legend.title = element_text(family = "Arial", size = 8, face = "bold"),
+    legend.title.align = 0.5,
+    legend.text = element_text(size=7),
+    plot.margin = margin(0.3, 0.3, 0.2, 0.2, unit = "cm"),
+    )
+  
+
+hist_infl2
+
+dev.off()
+
+knitr::include_graphics("plots/hist_infl2.png")
+```
+
+
+### inflorescence - Treatment Level (tl) - Boxplot
+```{r}
+grDevices::png(filename = "plots/violin_infl.png",  width = 6, height = 6, units = 'in', res = 400)
+
+violin_infl <- fndata %>%
+  group_by(treatmentLevel, dateFac) %>% mutate(N=n()) %>%
+  mutate(N=ifelse(inflorescence==max(inflorescence,na.rm=T),paste0('n=',N),NA)) %>%
+  ggplot(aes(x = treatmentLevel, y = inflorescence, fill = treatmentLevel, colour = treatmentLevel, label = N)) +
+  #geom_violin(alpha = 0.6) +
+  geom_boxplot(#width = 0.1, 
+               alpha = 0.6) +
+  geom_text(vjust = -0.1, hjust = 0.5, show.legend = FALSE) +
+  scale_fill_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  scale_colour_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  facet_wrap(~dateFac, nrow = 2, ncol = 2) + 
+  labs(x = "Treatment Level", y = "inflorescence") +
+  xlab("") +
+  #coord_flip() +
+  theme_538() +
+  theme(
+    legend.position = "top",
+    legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
+    legend.title = element_text(family = "Arial", size = 8, face = "bold"),
+    legend.title.align = 0.5,
+    legend.text = element_text(size=7)
+    )
+  
+
+violin_infl
+
+dev.off()
+
+knitr::include_graphics("plots/violin_infl.png")
+```
+
+# inflorescence - Treatment Level (tl) -  Points
+```{r}
+grDevices::png(filename = "plots/dots_infl_tl.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+
+dots_infl_tl <- fndata %>% ggplot(aes(x = dateFac, y = inflorescence, group = treatmentLevel, color = treatmentLevel))+
+  #geom_point()
+  geom_point(size = 2,shape = 20, 
+             position = position_dodge(0.2)) +
+             #position = "jitter") +
+             
+  geom_jitter(width = 0.2) +
+  #geom_line(position = position_dodge(0.25 ))+
+  stat_summary(fun =  mean, size = 2, geom = "point", 
+               position = position_dodge(0.25), show.legend = FALSE)+
+  
+  stat_summary(fun = mean, size = 0.5, geom = "line",
+               position = position_dodge(0.25), show.legend = FALSE)+
+    
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult=1), 
+               geom = "errorbar", width=0.2,
+               position = position_dodge(0.25), show.legend = FALSE) +
+  
+  theme_bw(base_size = 14,base_family = "Serif")+
+  xlab("Month")+
+  ylab("Inflorescence")+
+  # labs(fill = "Treatment")
+  # guides(fill=guide_legend(title = "Treatment"))
+  scale_color_manual("Treatment Level",values = c("#219ebc", "#fb8500"))+
+  theme_538() + 
+  theme(
+    legend.position = c(0.2, 0.8),
+    legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
+    legend.title = element_text(family = "Arial", size = 8, face = "bold"),
+    legend.title.align = 0.5,
+    legend.text = element_text(size=7)
+  )
+  
+dots_infl_tl
+
+dev.off()
+
+knitr::include_graphics("plots/dots_infl_tl.png")
+```
+
+
+```{r}
+table(fndata$treatmentLevel, fndata$inflorescence, fndata$dateFac)
+```
+
+
+### inflorescence - Treatment Level (tl) - Checking for Normality
+
+Shapiro-Test for each group p-values is less than 0.05, hence, we reject hypothesis about normal distribution.
+```{r}
+fndata %>% group_by(treatmentLevel) %>% 
+  shapiro_test(inflorescence)
+```
+
+### inflorescence - Treatment Level (tl) - Checking for Normality by Month
+
+If we divide by both month and treatment, distribution can be assumed to be normal
+```{r}
+fndata %>% group_by(treatmentLevel, dateFac) %>%
+  shapiro_test(inflorescence) %>%
+  left_join(fndata %>% 
+              group_by(treatmentLevel, dateFac) %>%
+              summarise(n = n()),
+            by = c("treatmentLevel", "dateFac"))
+```
+
+### inflorescence - Treatment Level (tl) - Pairwise T-test
+```{r}
+ph_infl_tl <- fndata %>% 
+  pairwise_t_test(
+    inflorescence~treatmentLevel, paired = FALSE, # due to sample difference
+    p.adjust.method = "holm"       # with treatment not so much of difference
+  )
+
+# print
+print(ph_infl_tl)
+```
+
+### inflorescence - Treatment Level (tl) - Pairwise T-test - For September 2017
+```{r}
+ph_infl_tl_sep <- fndata %>% 
+  filter(dateFac == "September 2017") %>%
+  pairwise_t_test(
+    inflorescence~treatmentLevel, paired = FALSE, # due to sample difference
+    p.adjust.method = "holm"       # with treatment not so much of difference
+  )
+
+# print
+print(ph_infl_tl_sep)
+```
+
+
+### inflorescence - Treatment Level (tl) - Pairwise T-test - For December 2017
+```{r}
+ph_infl_tl_dec <- fndata %>% 
+  filter(dateFac == "December 2017") %>%
+  pairwise_t_test(
+    inflorescence~treatmentLevel, paired = FALSE, # due to sample difference
+    p.adjust.method = "holm"       # with treatment not so much of difference
+  )
+
+# print
+print(ph_infl_tl_dec)
+```
+
+### inflorescence - Treatment Level (tl) - Pairwise T-test - For March 2018
+```{r}
+ph_infl_tl_mar <- fndata %>% 
+  filter(dateFac == "March 2018") %>%
+  pairwise_t_test(
+    inflorescence~treatmentLevel, paired = FALSE, # due to sample difference
+    p.adjust.method = "holm"       # with treatment not so much of difference
+  )
+
+# print
+print(ph_infl_tl_mar)
+```
+
+
+### inflorescence - Treatment Level (tl) - repeated Anova
+```{r}
+aov_infl_tl <- aov(inflorescence~treatmentLevel*dateFac + Error(id), data = fndata)
+summary(aov_infl_tl)
+```
+
+### inflorescence - Treatment Level (tl) - Mixed effects for repeated data 1
+```{r}
+lme1_infl_tl<- nlme::lme(inflorescence~1, random = ~1|treatmentLevel, method = "REML", na.action = na.omit,
+          data = fndata)
+
+summary(lme1_infl_tl)
+```
+
+### inflorescence - Treatment Level (tl) - Mixed effects for repeated data 2
+```{r}
+lme2_infl_tl<- nlme::lme(inflorescence~treatmentLevel, random = ~1|dateFac,
+                method = "REML", na.action = na.omit,
+                data = fndata)
+summary(lme2_infl_tl)
+```
+
+### inflorescence - Treatment Level (tl) - Mixed effects for repeated data 3
+```{r}
+lme3_infl_tl<- nlme::lme(inflorescence~treatmentLevel*dateFac, random = ~1|id,
+                method = "REML", na.action = na.omit,
+                data = fndata)
+
+summary(lme3_infl_tl)
+```
+
+### inflorescence - Treatment Level (tl) - Mixed effects for repeated data 4
+```{r}
+lme4_infl_tl <- nlme::lme(inflorescence~treatmentLevel, random = ~1|id,
+                method = "REML", na.action = na.omit,
+                data = fndata)
+
+lme4_infl_tl
+```
+
+### inflorescence - Treatment Level (tl) - Mixed effects for repeated data 5
+```{r}
+dglme_infl_tl<- lme4::lmer(inflorescence~treatmentLevel*dateFac +(1|id), data = fndata)
+
+
+anova(dglme_infl_tl, type = 3)
+summary(dglme_infl_tl)
+```
+
+```{r}
+table(fndata$dateFac, fndata$inflorescence, fndata$treatmentLevel)
+# five counts are only five
+```
+
+```{r}
+library(lme4)
+library(car)
+```
+
+
+```{r}
+ls1<- lme4::glmer(inflorescence~treatment*dateFac +(1|id), family = "poisson", 
+            data = fndata,
+            control = glmerControl(check.conv.singular = .makeCC(
+              action = "ignore",  tol = 1e-4)))
+
+
+
+car::Anova(ls1, type = "III") # sequantial sums of square
+# Interaction effects are not significant
+```
+
+```{r}
+ls2<- lme4::glmer(inflorescence~treatmentLevel +(1|id), 
+                  family = "poisson", 
+                  data   = fndata,
+                  control = glmerControl(check.conv.singular = .makeCC(
+                    action = "ignore",  tol = 1e-4)))
+# difference between model 2 (ls2) and ls1
+```
+
+# since interaction is not significant
+```{r}
+summary(ls2)
+```
+
+```{r}
+anova(ls2, ls1) # model 1
+```
+
+# model 1 (ls1) estimates
+```{r}
+mm     <- model.matrix(ls1)
+sumls1 <- summary(ls1)
+bhat   <- cbind(sumls1$coef[,1])
+elogod <- as.data.frame( mm %*% bhat)
+```
+
+```{r}
+nadat<-  na.omit(fndata[, c("treatmentLevel", "dateFac", "inflorescence", "diaIn")])
+estmean<- cbind(elogod$V1, nadat)
+  
+estavg <-  estmean %>% 
+  group_by(treatmentLevel, dateFac) %>%
+  summarise(mean = mean(inflorescence),
+            sd = sd(inflorescence))
+
+estavg
+```
+
+
+```{r}
+ls0<- lme4::glmer(inflorescence~0+treatment +(1|id), 
+                        family = "poisson", 
+                        data   = fndata,
+                        control = glmerControl(check.conv.singular = .makeCC(
+                          action = "ignore",  tol = 1e-4)))
+lcom<- rbind(c(-1, -1, 1,1)) # null beta == 0 NPA vs DMSO+Water 
+
+linearHypothesis(ls0, lcom)
+```
+
+```{r}
+infl0<- lme4::glmer(inflorescence~treatmentLevel*dateFac +(1|id), 
+                        family = "poisson", 
+                        data   = fndata,
+                        control = glmerControl(check.conv.singular = .makeCC(
+                          action = "ignore",  tol = 1e-4)))
+
+sjPlot::tab_model(infl0, file = "infl_tl.doc")
+summary(infl0)
+```
+

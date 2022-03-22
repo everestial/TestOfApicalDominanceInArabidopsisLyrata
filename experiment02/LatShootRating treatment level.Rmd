@@ -1,13 +1,13 @@
 ---
-title: "Analysis of diameter by treatment level"
+title: "R Notebook"
 author: "Bishwa"
 date: "`r Sys.Date()`"
 output:
+  
   github_document:
     toc: true
     toc_depth: 2
 ---
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -35,10 +35,9 @@ library(rstatix)
 
 ## 1.1 Upload Packages
 ```{r dataImport}
-##--------- set working directory
 
+#set working directory
 path<- "../data/"
-
 
 sep2017<- readxl::read_excel(path = paste0(path, "/09_18_2017_Data.xlsx"), sheet = "Sheet1", na = "NA")
 dec2017<- readxl::read_excel(path = paste0(path, "/12_18_2017_Data.xlsx"), sheet = "Sheet1", na = "NA")
@@ -136,38 +135,7 @@ fndata$plantID<- as.factor(fndata$plantID)
 sapply(fndata, class)
 ```
 
-```{r}
-fdata %>% distinct(plantID)
-```
-
-```{r}
-fdata %>% select(plantID, diaIn, month) %>%
-  pivot_wider(names_from = "month", values_from = "diaIn") %>%
-  mutate(check = ifelse(!is.na(Sep) & !is.na(Dec) & !is.na(Mar), 1, 0)) %>%
-  filter(check == 1)
-```
-
-```{r}
-fdata %>% group_by(month) %>%
-  summarise(count = n(),
-            na = sum(is.na(diaIn))) %>%
-  mutate(clean = count - na)
-```
-
-
-
-```{r}
-fdata %>% select(plantID, diaIn, month) %>%
-  pivot_wider(names_from = "month", values_from = "diaIn") %>%
-  mutate(check = ifelse(!is.na(Sep) & !is.na(Dec) & !is.na(Mar), 1, 0)) %>%
-  filter(check == 1) %>%
-  mutate(dc_change = ifelse(Dec - Sep < 0, 1, 0),
-         md_change = ifelse(Mar - Dec < 0, 1, 0)) %>%
-  filter(md_change == 1)
-```
-
-
-## Section 02 - Summary statistics
+## Section 02 - Overall Summary statistics
 
 ### Choose variables of interest
 ```{r pressure}
@@ -218,12 +186,6 @@ sumdata<- rbind(mean_diaInflo,mean_inflo, mean_latShoot)
 sumdata
 ```
 
-#
-```{r}
-library(sjPlot)
-```
-
-
 # Section 03 - Plots and Anlysis
 
 ### Theme Function
@@ -256,48 +218,49 @@ theme_538 <- function(base_size = 8, base_family = "Arial") {
 }
 ```
 
+# Lat Shoot Rating - Treatmnent Level (tl)
 
-## Diameter - Tretment Level
-
-### Diameter - Treatment Level (tl) -  Density Function
+### Lat Shoot Rating - Treatment Level (tl) -  Density Function
 ```{r}
-grDevices::png(filename = "plots/hist_diam_tl.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_lsr_tl.png",  width = 16.5, height = 10, units = 'cm', res = 400)
 
-hist_diam <- fndata %>%
-  ggplot(aes(diaIn, fill = treatmentLevel, colour = treatmentLevel)) +
+hist_lsr <- fndata %>%
+  ggplot(aes(latShootRating, fill = treatmentLevel, colour = treatmentLevel)) +
   geom_density(alpha = 0.6) +
-  scale_fill_manual("Treatment Level", values = c("#219ebc","#fb8500")) +
-  scale_colour_manual("Treatment Level", values = c("#219ebc","#fb8500")) + 
+  scale_fill_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  scale_colour_manual("Treatment Level", values = c("#219ebc", "#fb8500")) + 
   facet_wrap(~dateFac, nrow = 3) + 
-  labs(x = "Diameter (mm)", y = "Density") +
+  labs(x = "Lat Shoot Rating", y = "Density") +
   #coord_flip() + 
   theme_538() +
   theme(
     #legend.position = "top",
     legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
-    legend.title = element_text(size = 8, face = "bold"),
+    legend.title = element_text(family = "Arial", size = 8, face = "bold"),
     legend.title.align = 0.5,
     legend.text = element_text(size=7),
     plot.margin = margin(0.3, 0.1, 0.2, 0.2, unit = "cm"),
     )
-hist_diam  
+  
+
+hist_lsr
 
 dev.off()
 
-knitr::include_graphics("plots/hist_diam_tl.png")
+knitr::include_graphics("plots/hist_lsr_tl.png")
 ```
 
-### Diameter - Treatment Level (tl) -  Density Function version 2
+### Lat Shoot Rating - Treatment Level (tl) -  Density Function version 2
 ```{r}
-grDevices::png(filename = "plots/hist_diam2.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_lsr2.png",  width = 6, height = 4, units = 'in', res = 400)
 
-hist_diam2 <- fndata %>%
-  ggplot(aes(diaIn, fill = treatmentLevel, colour = treatmentLevel)) +
+hist_lsr2 <- fndata %>%
+  ggplot(aes(latShootRating, fill = treatmentLevel, colour = treatmentLevel)) +
   geom_density(alpha = 0.6) +
-  scale_fill_manual("Treatment Level", values = c("#219ebc","#fb8500")) +
+  scale_fill_manual("Treatment Level", values = c("#219ebc","#fb8500" )) +
   scale_colour_manual("Treatment Level", values = c("#219ebc","#fb8500")) + 
   facet_grid(treatmentLevel ~ dateFac) + 
-  labs(x = "Diameter (mm)", y = "Density") +
+  labs(x = "Lat Shoot Rating", y = "Density") +
   #coord_flip() + 
   theme_538() +
   theme(
@@ -310,29 +273,30 @@ hist_diam2 <- fndata %>%
     )
   
 
-hist_diam2
+hist_lsr2
 
 dev.off()
 
-knitr::include_graphics("plots/hist_diam2.png")
+knitr::include_graphics("plots/hist_lsr2.png")
 ```
 
-### Diameter - Treatment Level (tl) - Boxplot
-```{r}
-grDevices::png(filename = "plots/violin_diam.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
-violin_diam <- fndata %>%
+### Lat Shoot Rating - Treatment Level (tl) - Boxplot
+```{r}
+grDevices::png(filename = "plots/violin_lsr.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+
+violin_lsr <- fndata %>%
   group_by(treatmentLevel, dateFac) %>% mutate(N=n()) %>%
-  mutate(N=ifelse(diaIn==max(diaIn,na.rm=T),paste0('n=',N),NA)) %>%
-  ggplot(aes(x = treatmentLevel, y = diaIn, fill = treatmentLevel, colour = treatmentLevel, label = N)) +
+  mutate(N=ifelse(latShootRating==max(latShootRating,na.rm=T),paste0('n=',N),NA)) %>%
+  ggplot(aes(x = treatmentLevel, y = latShootRating, fill = treatmentLevel, colour = treatmentLevel, label = N)) +
   #geom_violin(alpha = 0.6) +
   geom_boxplot(#width = 0.1, 
                alpha = 0.6) +
-  geom_text(vjust = -0.2, hjust = 0.5, show.legend = FALSE, colour = "black", size = 3) +
-  scale_fill_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
-  scale_colour_manual("Treatment Level", values = c("#219ebc", "#fb8500")) +
+  geom_text(vjust = -0.1, hjust = 0.5, show.legend = FALSE) +
+  scale_fill_manual("Treatment Level", values = c("#219ebc","#fb8500" )) +
+  scale_colour_manual("Treatment Level", values = c("#219ebc","#fb8500" )) +
   facet_wrap(~dateFac, nrow = 1, ncol = 3) + 
-  labs(x = "Treatment Level", y = "Diameter (mm)") +
+  labs(x = "Treatment Level", y = "Lat Shoot Rating") +
   xlab("") +
   #coord_flip() +
   theme_538() +
@@ -341,25 +305,28 @@ violin_diam <- fndata %>%
     legend.background = element_rect(fill = "#f0f0f0", color = "#d0d0d0"),
     legend.title = element_text(family = "Arial", size = 8, face = "bold"),
     legend.title.align = 0.5,
-    legend.text = element_text(size=7),
-    #axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1)
+    legend.text = element_text(size=7)
     )
   
 
-violin_diam
+violin_lsr
 
 dev.off()
 
-knitr::include_graphics("plots/violin_diam.png")
+knitr::include_graphics("plots/violin_lsr.png")
 ```
 
-# Diameter - Treatment Level (tl) -  Points
+# Lat Shoot Rating - Treatment Level (tl) -  Points
 ```{r}
-grDevices::png(filename = "plots/dots_diam_tl.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/dots_lsr_tl.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
-dots_diam_tl <- fndata %>% ggplot(aes(x = dateFac, y = diaIn, group = treatmentLevel, color = treatmentLevel))+
+dots_lsr_tl <- fndata %>% ggplot(aes(x = dateFac, y = latShootRating, group = treatmentLevel, color = treatmentLevel))+
   #geom_point()
-  geom_point(size = 2,shape = 20, position = position_dodge(0.2 ))+
+  geom_point(size = 2,shape = 20, 
+             position = position_dodge(0.2)) +
+             #position = "jitter") +
+             
+  geom_jitter(width = 0.2) +
   #geom_line(position = position_dodge(0.25 ))+
   stat_summary(fun =  mean, size = 2, geom = "point", 
                position = position_dodge(0.25), show.legend = FALSE)+
@@ -372,8 +339,8 @@ dots_diam_tl <- fndata %>% ggplot(aes(x = dateFac, y = diaIn, group = treatmentL
                position = position_dodge(0.25), show.legend = FALSE) +
   
   theme_bw(base_size = 14,base_family = "Serif")+
-  xlab(" Treatment Level Date and Month")+
-  ylab(" Diameter (mm)")+
+  xlab("Month")+
+  ylab(" Lat Shoot Rating")+
   # labs(fill = "Treatment")
   # guides(fill=guide_legend(title = "Treatment"))
   scale_color_manual("Treatment Level",values = c("#219ebc","#fb8500"))+
@@ -386,179 +353,227 @@ dots_diam_tl <- fndata %>% ggplot(aes(x = dateFac, y = diaIn, group = treatmentL
     legend.text = element_text(size=7)
   )
   
-dots_diam_tl
+dots_lsr_tl
 
 dev.off()
 
-knitr::include_graphics("plots/dots_diam_tl.png")
+knitr::include_graphics("plots/dots_lsr_tl.png")
 ```
 
-### Diameter - Treatment Level (tl) - Checking for Normality
+# 
+```{r}
+table(fndata$treatmentLevel, fndata$latShootRating, fndata$dateFac)
+```
+
+
+### Lat Shoot Rating - Treatment Level (tl) - Checking for Normality
+
 Shapiro-Test for each group p-values is less than 0.05, hence, we reject hypothesis about normal distribution.
 ```{r}
 fndata %>% group_by(treatmentLevel) %>% 
-  shapiro_test(diaIn)
+  shapiro_test(latShootRating)
 ```
 
-### Diameter - Treatment Level (tl) - Checking for Normality by Month
+### Lat Shoot Rating - Treatment Level (tl) - Checking for Normality by Month
+
 If we divide by both month and treatment, distribution can be assumed to be normal
 ```{r}
 fndata %>% group_by(treatmentLevel, dateFac) %>%
-  shapiro_test(diaIn) %>%
+  shapiro_test(latShootRating) %>%
   left_join(fndata %>% 
               group_by(treatmentLevel, dateFac) %>%
               summarise(n = n()),
             by = c("treatmentLevel", "dateFac"))
 ```
 
-### Diameter - Treatment Level (tl) - Pairwise T-test
+### Lat Shoot Rating - Treatment Level (tl) - Pairwise T-test
 ```{r}
-ph_diam_tl <- fndata %>% 
+ph_lsr_tl <- fndata %>% 
   pairwise_t_test(
-    diaIn~treatmentLevel, paired = FALSE, # due to sample difference
+    latShootRating~treatmentLevel, paired = FALSE, # due to sample difference
     p.adjust.method = "holm"       # with treatment not so much of difference
   )
 
 # print
-print(ph_diam_tl)
+print(ph_lsr_tl)
 ```
 
-
+### Lat Shoot Rating - Treatment Level (tl) - Pairwise T-test - For September 2017
 ```{r}
-t.test(diaIn ~ treatmentLevel, data = subset(fndata, dateFac == "September 2017"))
-```
-
-
-```{r}
-t.test(diaIn ~ treatmentLevel, data = subset(fndata, dateFac == "December 2017"))
-```
-
-```{r}
-t.test(diaIn ~ treatmentLevel, data = subset(fndata, dateFac == "March 2018"))
-```
-
-```{r}
-t.test(diaIn ~ treatmentLevel, data = subset(fndata, dateFac == "December 2017"), alternative = "less")
-```
-
-
-### Diameter - Treatment Level (tl) - Pairwise T-test - For September 2017
-```{r}
-ph_diam_tl_sep <- fndata %>% 
+ph_lsr_tl_sep <- fndata %>% 
   filter(dateFac == "September 2017") %>%
   pairwise_t_test(
-    diaIn~treatmentLevel, paired = FALSE, # due to sample difference
+    latShootRating~treatmentLevel, paired = FALSE, # due to sample difference
     p.adjust.method = "holm"       # with treatment not so much of difference
   )
 
 # print
-print(ph_diam_tl_sep)
-
-ttest_diam_tl <- t.test(subset(fndata, fndata$treatmentLevel == "Control")$diaIn,
-       subset(fndata, fndata$treatmentLevel == "NPA")$diaIn)
+print(ph_lsr_tl_sep)
 ```
 
 
-### Diameter - Treatment Level (tl) - Pairwise T-test - For December 2017
+### Lat Shoot Rating - Treatment Level (tl) - Pairwise T-test - For December 2017
 ```{r}
-ph_diam_tl_dec <- fndata %>% 
+ph_lsr_tl_dec <- fndata %>% 
   filter(dateFac == "December 2017") %>%
   pairwise_t_test(
-    diaIn~treatmentLevel, paired = FALSE, # due to sample difference
+    latShootRating~treatmentLevel, paired = FALSE, # due to sample difference
     p.adjust.method = "holm"       # with treatment not so much of difference
   )
 
 # print
-print(ph_diam_tl_dec)
+print(ph_lsr_tl_dec)
 ```
 
-### Diameter - Treatment Level (tl) - Pairwise T-test - For March 2018
+### Lat Shoot Rating - Treatment Level (tl) - Pairwise T-test - For March 2018
 ```{r}
-ph_diam_tl_mar <- fndata %>% 
+ph_lsr_tl_mar <- fndata %>% 
   filter(dateFac == "March 2018") %>%
   pairwise_t_test(
-    diaIn~treatmentLevel, paired = FALSE, # due to sample difference
+    latShootRating~treatmentLevel, paired = FALSE, # due to sample difference
     p.adjust.method = "holm"       # with treatment not so much of difference
   )
 
 # print
-print(ph_diam_tl_mar)
+print(ph_lsr_tl_mar)
 ```
 
 
-### Diameter - Treatment Level (tl) - repeated Anova
+### Lat Shoot Rating - Treatment Level (tl) - repeated Anova
 ```{r}
-aov_diam_tl <- aov(diaIn~treatmentLevel*dateFac + Error(id), data = fndata)
-summary(aov_diam_tl)
+aov_lsr_tl <- aov(latShootRating~treatmentLevel*dateFac + Error(id), data = fndata)
+summary(aov_lsr_tl)
 ```
 
-### Diameter - Treatment Level (tl) - Mixed effects for repeated data 1
+### Lat Shoot Rating - Treatment Level (tl) - Mixed effects for repeated data 1
 ```{r}
-lme1_diam_tl<- nlme::lme(diaIn~1, random = ~1|treatmentLevel, method = "REML", na.action = na.omit,
+lme1_lsr_tl<- nlme::lme(latShootRating~1, random = ~1|treatmentLevel, method = "REML", na.action = na.omit,
           data = fndata)
 
-summary(lme1_diam_tl)
+summary(lme1_lsr_tl)
 ```
 
-### Diameter - Treatment Level (tl) - Mixed effects for repeated data 2
+### Lat Shoot Rating - Treatment Level (tl) - Mixed effects for repeated data 2
 ```{r}
-lme2_diam_tl<- nlme::lme(diaIn~treatmentLevel, random = ~1|dateFac,
+lme2_lsr_tl<- nlme::lme(latShootRating~treatmentLevel, random = ~1|dateFac,
                 method = "REML", na.action = na.omit,
                 data = fndata)
-summary(lme2_diam_tl)
+summary(lme2_lsr_tl)
 ```
 
-### Diameter - Treatment Level (tl) - Mixed effects for repeated data 3
+### Lat Shoot Rating - Treatment Level (tl) - Mixed effects for repeated data 3
 ```{r}
-lme3_diam_tl<- nlme::lme(diaIn~treatmentLevel*dateFac, random = ~1|id,
-                method = "REML", na.action = na.omit,
-                data = fndata)
-
-summary(lme3_diam_tl)
-```
-
-### Diameter - Treatment Level (tl) - Mixed effects for repeated data 4
-```{r}
-lme4_diam_tl <- nlme::lme(diaIn~treatmentLevel, random = ~1|id,
+lme3_lsr_tl<- nlme::lme(latShootRating~treatmentLevel*dateFac, random = ~1|id,
                 method = "REML", na.action = na.omit,
                 data = fndata)
 
-lme4_diam_tl
+summary(lme3_lsr_tl)
 ```
 
-### Diameter - Treatment Level (tl) - Mixed effects for repeated data 5
+### Lat Shoot Rating - Treatment Level (tl) - Mixed effects for repeated data 4
 ```{r}
-dglme_diam_tl<- lme4::lmer(diaIn~treatmentLevel*dateFac +(1|id), data = fndata)
+lme4_lsr_tl <- nlme::lme(latShootRating~treatmentLevel, random = ~1|id,
+                method = "REML", na.action = na.omit,
+                data = fndata)
 
-anova(dglme_diam_tl, type = 3)
-summary(dglme_diam_tl)
+lme4_lsr_tl
 ```
 
+### Lat Shoot Rating - Treatment Level (tl) - Mixed effects for repeated data 5
 ```{r}
-dglme_diam_tl<- lme4::lmer(diaIn~treatmentLevel*dateFac +(1|id), data = fndata)
-
-anova(dglme_diam_tl, type = 3)
-summary(dglme_diam_tl)
-
-plot(as.vector(predict(dglme_diam_tl, fndata)), fndata$diaIn)
-tab_model(dglme_diam_tl, file = "diam_tl.doc")
-```
+dglme_lsr_tl<- lme4::lmer(latShootRating~treatmentLevel*dateFac +(1|id), data = fndata)
 
 
-```{r}
-summary(aov(diaIn ~ treatmentLevel*dateFac, data = fndata))
+anova(dglme_lsr_tl, type = 3)
+summary(dglme_lsr_tl)
 ```
 
 ```{r}
-summary(lm(diaIn ~ treatmentLevel*dateFac, data = fndata))
+table(fndata$dateFac, fndata$latShootRating, fndata$treatmentLevel)
+# five counts are only five
 ```
 
-
-### 
 ```{r}
-library(sjPlot)
-tab_model(dglme_diam_tl, file = "test.doc")
-tab_model(lme3_diam_tl, file = "test2.doc")
+library(lme4)
+library(car)
 ```
 
-# End
+
+```{r}
+ls1<- lme4::glmer(latShootRating~treatment*dateFac +(1|id), family = "poisson", 
+            data = fndata,
+            control = glmerControl(check.conv.singular = .makeCC(
+              action = "ignore",  tol = 1e-4)))
+
+
+
+car::Anova(ls1, type = "III") # sequantial sums of square
+# Interaction effects are not significant
+```
+
+```{r}
+ls2<- lme4::glmer(latShootRating~treatmentLevel +(1|id), 
+                  family = "poisson", 
+                  data   = fndata,
+                  control = glmerControl(check.conv.singular = .makeCC(
+                    action = "ignore",  tol = 1e-4)))
+# difference between model 2 (ls2) and ls1
+```
+
+# since interaction is not significant
+```{r}
+summary(ls2)
+```
+
+```{r}
+anova(ls2, ls1) # model 1
+```
+
+# model 1 (ls1) estimates
+```{r}
+mm     <- model.matrix(ls1)
+sumls1 <- summary(ls1)
+bhat   <- cbind(sumls1$coef[,1])
+elogod <- as.data.frame( mm %*% bhat)
+```
+
+```{r}
+nadat<-  na.omit(fndata[, c("treatmentLevel", "dateFac", "latShootRating", "diaIn")])
+estmean<- cbind(elogod$V1, nadat)
+  
+estavg <-  estmean %>% 
+  group_by(treatmentLevel, dateFac) %>%
+  summarise(mean = mean(latShootRating),
+            sd = sd(latShootRating))
+
+estavg
+```
+
+
+```{r}
+ls0<- lme4::glmer(latShootRating~0+treatment +(1|id), 
+                        family = "poisson", 
+                        data   = fndata,
+                        control = glmerControl(check.conv.singular = .makeCC(
+                          action = "ignore",  tol = 1e-4)))
+lcom<- rbind(c(-1, -1, 1,1)) # null beta == 0 NPA vs DMSO+Water 
+
+linearHypothesis(ls0, lcom)
+```
+
+```{r}
+summary(ls0)
+```
+
+```{r}
+ls0<- lme4::glmer(latShootRating~treatmentLevel*dateFac +(1|id), 
+                        family = "poisson", 
+                        data   = fndata,
+                        control = glmerControl(check.conv.singular = .makeCC(
+                          action = "ignore",  tol = 1e-4)))
+
+sjPlot::tab_model(ls0, file = "lsr_tl.doc")
+summary(ls0)
+```
+
+
