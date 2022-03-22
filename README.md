@@ -4,9 +4,7 @@ This is the Project (03) of my PhD. This project contains data obtained from aux
 
 Data was recorded as photo of each plant taken from top with a scale and it's ID on the side. The photos were recored weekly but at time biweekly due to inconvenience. The trait measurements are included in folder **"/TraitData/"** as excel file for different months. All the analyses (plotting and statistical) is done in **`R`**. The script file is available as file **"AlyAuxinTreatmentDataAnalyses.R"**. 
 
-**The "Rmarkdown" of the the analyses is available as HTML output in this link:** https://rawgit.com/everestial/AuxinInhibitionResultsDataAnalyses/master/AlyAuxinTreatmentDataAnalyses.html 
-
-**Here is another link to the embeded HTML output if above link didn't work:** http://htmlpreview.github.io/?https://github.com/everestial/AuxinInhibitionResultsDataAnalyses/blob/master/AlyAuxinTreatmentDataAnalyses.html 
+Visit link: https://everestial.github.io/TestOfApicalDominanceInArabidopsisLyrata/ for more detail analysis.
 
 
 
