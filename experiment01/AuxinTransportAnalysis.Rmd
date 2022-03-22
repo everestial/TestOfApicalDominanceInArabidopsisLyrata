@@ -39,9 +39,9 @@ library(sjPlot)
 outliers or contaminated data are; MY2:1 (row number 7), 12, and 24
 
 ```{r readata}
-path<- "../data/auxin_tranportData.xls"
+path<- "../data/"
 
-adata<- readxl::read_excel(path = path,sheet = "Sheet1",
+adata<- readxl::read_excel(path = paste0(path, "/auxin_tranportData.xls"),sheet = "Sheet1",
                     range = "A1:L37",col_names = TRUE)
 
 str(adata)
@@ -123,7 +123,7 @@ The difference in mean is around 2400
 
 ## Overall Histogram
 ```{r hist}
-grDevices::png(filename = "hist_all.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_all.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 # data = adata
 (HistoPmani <- ggplot(data = adata,aes(x = dpm3H))+
@@ -140,7 +140,7 @@ theme_classic()
 
 dev.off()
 
-knitr::include_graphics("hist_all.png")
+knitr::include_graphics("plots/hist_all.png")
 ```
 
 
@@ -148,7 +148,7 @@ knitr::include_graphics("hist_all.png")
 
 ### Histogram
 ```{r pop hist}
-grDevices::png(filename = "hist_pop.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/hist_pop.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 # data = adata
 (HistoPmani <- ggplot(data = adata,aes(x = dpm3H, fill = population, color = population))+
@@ -165,7 +165,7 @@ grDevices::png(filename = "hist_pop.png",  width = 12.5, height = 8, units = 'cm
 
 dev.off()
 
-knitr::include_graphics("hist_pop.png")
+knitr::include_graphics("plots/hist_pop.png")
 ```
 
 ### Outliers
@@ -189,7 +189,7 @@ Distribution for Mayodan seems to non-normal, while for Spiterstulen is more or 
 kable(adata %>% group_by(population) %>% 
   shapiro_test(dpm3H)) %>% kable_styling(full_width = FALSE)
 
-grDevices::png(filename = "qq_pop.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/qq_pop.png",  width = 16.5, height = 10, units = 'cm', res = 400)
 
 #-------- QQ plot
 adata %>% ggplot(aes(sample = dpm3H, color = population), alpha = 0.8)+
@@ -209,7 +209,7 @@ adata %>% ggplot(aes(sample = dpm3H, color = population), alpha = 0.8)+
 
 dev.off()
 
-knitr::include_graphics("qq_pop.png")
+knitr::include_graphics("plots/qq_pop.png")
 ```
 
 
@@ -257,7 +257,7 @@ adata %>% group_by(species) %>%
   shapiro_test(dpm3H) %>% kbl() %>% kable_styling(full_width = F)
 # when observation # & removed the Mayodan species is not longer normal
 
-grDevices::png(filename = "qq_species.png",  width = 16.5, height = 10, units = 'cm', res = 400)
+grDevices::png(filename = "plots/qq_species.png",  width = 16.5, height = 10, units = 'cm', res = 400)
 
 #-------- QQ plot
 adata %>% ggplot(aes(sample = dpm3H, color = population))+
@@ -277,7 +277,7 @@ adata %>% ggplot(aes(sample = dpm3H, color = population))+
 
 dev.off()
 
-knitr::include_graphics("qq_species.png")
+knitr::include_graphics("plots/qq_species.png")
 ```
 
 ### Homogenty
@@ -308,7 +308,7 @@ On the 10% level we can say that groups have different means.
 
 # create statistical plot
 
-grDevices::png(filename = "box_pop.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/box_pop.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 (boxplot<- adata %>% ggplot(aes(x = population, y = dpm3H, color = population))+
   geom_boxplot(stat = "boxplot", alpha = 0.4)+
@@ -327,7 +327,7 @@ grDevices::png(filename = "box_pop.png",  width = 12.5, height = 8, units = 'cm'
 
 dev.off()
 
-knitr::include_graphics("box_pop.png")
+knitr::include_graphics("plots/box_pop.png")
 
 ```
 
@@ -349,7 +349,7 @@ The results are pretty the same as for T-test. Though p-value seems to be closer
 In all cases means for Mayodan plants are a bit higher that those of Spiterstulen.
 ```{r species box plots}
 
-grDevices::png(filename = "box_species.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/box_species.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 ( bplot_species<- adata %>% 
     group_by(species) %>% mutate(N=n()) %>% 
@@ -373,7 +373,7 @@ grDevices::png(filename = "box_species.png",  width = 12.5, height = 8, units = 
 
 dev.off()
 
-knitr::include_graphics("box_species.png")
+knitr::include_graphics("plots/box_species.png")
 ```
 
 
@@ -436,7 +436,7 @@ pwcs %>%
   kable_styling(full_width = FALSE)
 
 #Visualize comparison
-grDevices::png(filename = "tukey_species.png",  width = 12.5, height = 8, units = 'cm', res = 400)
+grDevices::png(filename = "plots/tukey_species.png",  width = 12.5, height = 8, units = 'cm', res = 400)
 
 pwcs %>% 
   mutate(comparison = factor(paste0(group1,"-",group2), levels = rev(paste0(group1,"-",group2)))) %>%
@@ -457,7 +457,7 @@ pwcs %>%
 
 dev.off()
 
-knitr::include_graphics("tukey_species.png")
+knitr::include_graphics("plots/tukey_species.png")
 
 pwcs<- pwcs %>% add_xy_position(x = "species")
 ```
